@@ -27,10 +27,11 @@ income_data <- income_data %>%
 
 #checking the balance of the dataset
 table(income_data$income)   #results - 24,720 records for <=50K and 7,841 for >50K (unbalanced)
+prop.table(table(income_data$income))  #same table, but in proportions
 
 #splitting data into training and test set
 #80% training, 20% test - random sample
-set.seed(13)
+#using createDataPartition from Caret to preserve the balance of the original data
 trainIndex <- createDataPartition(income_data$income, p = .8, list = FALSE, times = 1)
 income_train <- income_data[trainIndex,]
 income_test <- income_data[-trainIndex,]
@@ -73,7 +74,7 @@ conf_mat_pruned <- confusionMatrix(pred_pruned, income_test$income, mode = 'prec
 conf_mat_pruned$table
 
 #removing variables not needed anymore
-rm(conf_mat, conf_mat_pruned, cv_tree, pred, pred_pruned)
+#rm(conf_mat, conf_mat_pruned, cv_tree, pred, pred_pruned)
 
 #------------------------------- Neural Network  ------------------------------
 
@@ -130,7 +131,7 @@ ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
 income_svm_model <- train(x = income_train_svm, y = income_train_svm_y$income, method = 'svmLinear', tuneLength = 9, metric = 'Accuracy', trControl = ctrl)
 
 #saving model to load in markdown doc since it took 25 minutes to run
-save(income_svm_model, file = 'income_svm_model.rda')
+#save(income_svm_model, file = 'income_svm_model.rda')
 
 #making predictions
 svm_pred <- predict(income_svm_model, newdata = income_test_svm)
@@ -183,7 +184,7 @@ ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
 knn_model2 <- train(x = income_train_knn, y = income_train_knn_y$income, method = 'knn', metric = 'Accuracy', trControl = ctrl, tuneLength = 20)
 
 #saving model to load into markdown doc because it took about 30 minutes to run
-save(knn_model2, file = 'income_knn_model2.rda')
+#save(knn_model2, file = 'income_knn_model2.rda')
 
 #making predictions on the test data
 knn_pred <- predict(knn_model2, newdata = income_test_knn)

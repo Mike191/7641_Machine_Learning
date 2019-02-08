@@ -162,8 +162,18 @@ income_test_svm <- predict(missing, income_test_svm)
 #preprocessing done - building svm model
 ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
 
+#starting processing time
+start <- proc.time()[3]
+
 #building svm model
 income_svm_model <- train(x = income_train_svm, y = income_train_svm_y$income, method = 'svmLinear', tuneLength = 9, metric = 'Accuracy', trControl = ctrl)
+
+#ending processing time
+stop <- proc.time()[3]
+
+#storing the time
+svm_time <- stop - start
+#517
 
 #saving model to load in markdown doc since it took 25 minutes to run
 #save(income_svm_model, file = 'income_svm_model.rda')
@@ -215,8 +225,18 @@ income_test_knn <- predict(missing, income_test_knn)
 #preprocessing of data done - building model
 ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
 
+#starting processing time
+start <- proc.time()[3]
+
 #KNN model
 knn_model2 <- train(x = income_train_knn, y = income_train_knn_y$income, method = 'knn', metric = 'Accuracy', trControl = ctrl, tuneLength = 20)
+
+#ending processing time
+stop <- proc.time()[3]
+
+#calculating the processing time
+knn_time <- stop - start
+#884 seconds
 
 #saving model to load into markdown doc because it took about 30 minutes to run
 #save(knn_model2, file = 'income_knn_model2.rda')

@@ -78,14 +78,49 @@ conf_mat_pruned$table
 
 #------------------------------- Neural Network  ------------------------------
 
+#starting processing time
+start <- proc.time()[3]
 
+#building neural network
+income_nnet <- train(income ~ ., data = income_train, method = 'nnet', na.action = na.pass)
 
+#ending processing time
+stop <- proc.time()[3]
 
+#storing processing time
+orig_nnet_time <- stop - start
+#processing time = 776 seconds
+
+#making predictions
+nnet_pred <- predict(income_nnet, newdata = income_test[1:12], type = 'raw', na.action = na.pass)
+
+#creating a confusion matrix
+nnet_cm <- confusionMatrix(nnet_pred, income_test$income, mode = 'prec_recall')
 
 #------------------------------ Boosting  -------------------------------------
 
+#starting processing time
+start <- proc.time()[3]
 
+#building model
+ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
+income_boost <- train(income ~ ., data = income_train, method = 'xgbTree', trControl = ctrl, na.action = na.pass)
 
+#ending processing time
+stop <- proc.time()[3]
+
+#calculating processing time
+boost_time <- stop - start
+#2477 seconds
+
+#saving model since it took a long time to run
+save(income_boost, file = 'income_boost_model.rda')
+
+#making predictions
+boost_pred <- predict(income_boost, newdata = income_test, type = 'raw', na.action = na.pass)
+
+#creating confusion matrix
+boost_cm <- confusionMatrix(boost_pred, income_test$income, mode = 'prec_recall')
 
 #------------------------------ SVM  ------------------------------------------
 

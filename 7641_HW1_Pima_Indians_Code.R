@@ -40,6 +40,20 @@ pima_test <- pima_data[-trainIndex,]
 
 #--------------------------------- Decision Tree -----------------------------------------
 
+#Learning curve
+lrn_curve <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10, outcome = 'Diagnosis', method = 'svmLinear2', test_prop = .2)
+
+#plotting learning curve
+ggplot(lrn_curve, aes(x = Training_Size, y = Accuracy, color = Data)) +
+  geom_smooth(se = F) +
+  theme_bw() + 
+  theme(legend.position = c(0.88, 0.85),
+        legend.background = element_rect(color = 'black')) +
+  labs(title = 'Learning curve for Pima Indians Data')
+
+
+#--------------------------------- Decision Tree -----------------------------------------
+
 #creating tree using training data
 pima_tree_model <- tree(Diagnosis ~ ., data = pima_train)
 

@@ -45,7 +45,7 @@ lrn_curve <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10, outcome 
 
 
 #plotting learning curve
-ggplot(lrn_curve, aes(x = Training_Size, y = Accuracy, color = Data)) +
+ggplot(inc_lrn_curve_tree, aes(x = Training_Size, y = Accuracy, color = Data)) +
   geom_smooth(se = F) +
   theme_bw() + 
   theme(legend.position = c(0.88, 0.85),
@@ -55,24 +55,39 @@ ggplot(lrn_curve, aes(x = Training_Size, y = Accuracy, color = Data)) +
 
 #--------------------------------- Decision Tree -----------------------------------------
 
+#Learning curve
+pima_lrn_curve_tree <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10, outcome = 'Diagnosis', method = 'C5.0Tree', test_prop = .2)
+
+#plotting learning curve
+ggplot(pima_lrn_curve_tree, aes(x = Training_Size, y = Accuracy, color = Data)) +
+  geom_smooth(se = F) +
+  theme_bw() + 
+  theme(legend.position = c(0.88, 0.85),
+        legend.background = element_rect(color = 'black')) +
+  labs(title = 'Learning curve for Pima Indians Tree')
+
+#staring processing time
+start <- proc.time()[3]
+
 #creating tree using training data
-pima_tree_model <- tree(Diagnosis ~ ., data = pima_train)
+pima_tree_model <- train(Diagnosis ~ ., data = pima_train, method = 'C5.0')
 
-#making predictions on test data
-pima_tree_pred <- predict(pima_tree_model, pima_test, type = 'class')
+#stopping processing time
+stop <- proc.time()[3]
 
-#creating a confusion matrix
-pima_tree_cm <- confusionMatrix(pima_tree_pred, pima_test$Diagnosis, mode = 'prec_recall')
-pima_tree_cm$table
+#storing processing time
+pima_tree_time <- stop - start
+#
 
 #using cross validation to prune the tree
 pima_cv_tree <- cv.tree(pima_tree_model, FUN = prune.misclass)
 
-#plotting cv tree to determine now many terminal nodes ot use in the pruned tree
+#plotting results of cross validation to prune tree (model complexity curve)
 plot(pima_cv_tree)
 
 #pruning tree according to the results of the cross validation plot
 #using 5 terminal nodes
+#final tree model
 pima_pruned_tree <- prune.misclass(pima_tree_model, best = 5)
 
 #making predictions on the pruned tree with the test set
@@ -84,6 +99,17 @@ pima_pruned_cm$table
 
 
 #------------------------------- Neural Network  ------------------------------
+
+#Learning curve
+pima_lrn_curve_nn <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10, outcome = 'Diagnosis', method = 'nnet', test_prop = .2)
+
+#plotting learning curve
+ggplot(pima_lrn_curve_tree, aes(x = Training_Size, y = Accuracy, color = Data)) +
+  geom_smooth(se = F) +
+  theme_bw() + 
+  theme(legend.position = c(0.88, 0.85),
+        legend.background = element_rect(color = 'black')) +
+  labs(title = 'Learning curve for Pima Indians Tree')
 
 #starting processing time
 start <- proc.time()[3]

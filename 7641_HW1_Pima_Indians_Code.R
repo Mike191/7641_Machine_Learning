@@ -14,6 +14,18 @@ library(RANN)
 set.seed(13)
 
 
+#format
+#loading and prepping data
+#models
+#   learning curve
+#   build model - calc processing time
+#   plot model tuning parameters vs accuracy on training data (model complexity curve)
+#   build final model if needed
+#   make predictions on test data
+#   confustion matrix and accuracy on test data
+
+
+
 #------------------------------------ Loading and prepping data  --------------------------------
 
 #loading data 
@@ -37,20 +49,6 @@ trainIndex <- createDataPartition(pima_data$Diagnosis, p = .8, list = FALSE, tim
 pima_train <- pima_data[trainIndex,]
 pima_test <- pima_data[-trainIndex,]
 
-
-#--------------------------------- Learning Curve -----------------------------------------
-
-#Learning curve
-lrn_curve <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10, outcome = 'Diagnosis', method = 'svmLinear2', test_prop = .2)
-
-
-#plotting learning curve
-ggplot(inc_lrn_curve_tree, aes(x = Training_Size, y = Accuracy, color = Data)) +
-  geom_smooth(se = F) +
-  theme_bw() + 
-  theme(legend.position = c(0.88, 0.85),
-        legend.background = element_rect(color = 'black')) +
-  labs(title = 'Learning curve for Pima Indians Data')
 
 
 #--------------------------------- Decision Tree -----------------------------------------
@@ -104,12 +102,12 @@ pima_pruned_cm$table
 pima_lrn_curve_nn <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10, outcome = 'Diagnosis', method = 'nnet', test_prop = .2)
 
 #plotting learning curve
-ggplot(pima_lrn_curve_tree, aes(x = Training_Size, y = Accuracy, color = Data)) +
+ggplot(pima_lrn_curve_nn, aes(x = Training_Size, y = Accuracy, color = Data)) +
   geom_smooth(se = F) +
   theme_bw() + 
   theme(legend.position = c(0.88, 0.85),
         legend.background = element_rect(color = 'black')) +
-  labs(title = 'Learning curve for Pima Indians Tree')
+  labs(title = 'Learning curve for Pima Indians Neural Network')
 
 #starting processing time
 start <- proc.time()[3]
@@ -123,6 +121,11 @@ stop <- proc.time()[3]
 
 #storing processing time
 pima_nn_time <- stop - start
+#
+
+#plotting model complexity curve
+
+
 
 #making predictions
 pima_nn_pred <- predict(pima_nn, newdata = pima_test, type = 'raw')
@@ -134,6 +137,17 @@ pima_nn_cm <- confusionMatrix(pima_nn_pred, pima_test$Diagnosis, mode = 'prec_re
 
 
 #------------------------------ Boosting  -------------------------------------
+
+#Learning curve
+pima_lrn_curve_boost <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10, outcome = 'Diagnosis', method = 'xbgTree', test_prop = .2)
+
+#plotting learning curve
+ggplot(pima_lrn_curve_boost, aes(x = Training_Size, y = Accuracy, color = Data)) +
+  geom_smooth(se = F) +
+  theme_bw() + 
+  theme(legend.position = c(0.88, 0.85),
+        legend.background = element_rect(color = 'black')) +
+  labs(title = 'Learning curve for Pima Indians xbgBoost')
 
 #starting processing time
 start <- proc.time()[3]
@@ -147,6 +161,9 @@ stop <- proc.time()[3]
 
 #storing processing time
 pima_boost_time <- stop - start
+#
+
+#model complexity curve
 
 #making predictions
 pima_boost_pred <- predict(pima_boost, newdata = pima_test, type = 'rwa')
@@ -157,14 +174,52 @@ pima_boost_cm <- confusionMatrix(pima_boost_pred, pima_test$Diagnosis, mode = 'p
 
 #------------------------------ SVM  ------------------------------------------
 
-#setting up the control
-ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
+#Learning curve
+pima_lrn_curve_svm <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10, outcome = 'Diagnosis', method = 'svmLinear', test_prop = .2)
+
+#plotting learning curve
+ggplot(pima_lrn_curve_svm, aes(x = Training_Size, y = Accuracy, color = Data)) +
+  geom_smooth(se = F) +
+  theme_bw() + 
+  theme(legend.position = c(0.88, 0.85),
+        legend.background = element_rect(color = 'black')) +
+  labs(title = 'Learning curve for Pima Indians SVM')
+
+#starting processing time
+start <- proc.time()[3]
 
 #building svm model
+ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
 pima_svm_model <- train(Diagnosis ~ ., data = pima_train, method = 'svmLinear', tuneLength = 9, metric = 'Accuracy', trControl = ctrl)
+
+#stopping processing time
+stop <- proc.time()[3]
+
+#storing processing time
+pima_svm_time <- stop - start
+#
 
 #model ran quick - unlike income data set - but saving anyway so I can load it into the markdown doc
 save(pima_svm_model, file = "pima_svm_model.rda")
+
+#expanding the grid to try more options for C
+grid <- expand.grid(C = c(0.25, 0.5, 0.75, 1, 1.25, 1.5))
+
+#starting processing time
+start <- proc.time()[3]
+
+#building svm model
+pima_svm_model_grid <- train(Diagnosis ~ ., method = 'svmLinear', tuneLength = 9, metric = 'Accuracy', tuneGrid = grid, trControl = ctrl)
+
+#ending processing time
+stop <- proc.time()[3]
+
+#storing the time
+pima_grid_time <- stop - start
+
+#plotting tuning grid results (model complexity curve)
+
+#final model
 
 #making predcitions on test data
 pima_svm_pred <- predict(pima_svm_model, newdata = pima_test)
@@ -174,14 +229,24 @@ pima_svm_cm <- confusionMatrix(pima_svm_pred, pima_test$Diagnosis, mode = 'prec_
 
 
 
-
 #------------------------------ KNN  ------------------------------------------
+
+#Learning curve
+pima_lrn_curve_knn <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10, outcome = 'Diagnosis', method = 'knn', test_prop = .2)
+
+#plotting learning curve
+ggplot(pima_lrn_curve_knn, aes(x = Training_Size, y = Accuracy, color = Data)) +
+  geom_smooth(se = F) +
+  theme_bw() + 
+  theme(legend.position = c(0.88, 0.85),
+        legend.background = element_rect(color = 'black')) +
+  labs(title = 'Learning curve for Pima Indians KNN')
 
 #starting processing time
 start <- proc.time()[3]
 
 #building knn model
-ctrl <- trainControl(method = ‘repeatedcv’, repeats = 5)
+ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
 pima_knn_model <- train(Diagnosis ~ ., data = pima_train, method = 'knn', metric = 'Accuracy', trControl = ctrl)
 
 #stopping processing time
@@ -189,6 +254,9 @@ stop <- proc.time()[3]
 
 #calculating processing time
 pima_knn_time <- stop - start
+#
+
+#model complexity curve
 
 #making predictions on test data
 pima_knn_pred <- predict(pima_knn_model, newdata = pima_test)

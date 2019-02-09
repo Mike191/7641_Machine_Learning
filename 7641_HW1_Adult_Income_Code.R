@@ -7,11 +7,22 @@ library(rpart)
 library(tree)
 library(caret)
 library(kernlab)
-library(pROC)
 library(RANN)
 
 #setting the seed
 set.seed(13)
+
+#format
+#loading and prepping data
+#models
+#   learning curve
+#   build model - calc processing time
+#   plot model tuning parameters vs accuracy on training data (model complexity curve)
+#   build final model if needed
+#   make predictions on test data
+#   confustion matrix and accuracy on test data
+
+
 
 #------------------------------------ Loading and prepping data  --------------------------------
 
@@ -37,6 +48,53 @@ income_train <- income_data[trainIndex,]
 income_test <- income_data[-trainIndex,]
 
 
+#creating second training and testing data set that's cut down for models that were taking too long to run on full data
+#also creating dummy variables for models - like svm - that weren't working with factors
+#also getting rid of missing values for models that can't run on missing values
+
+#cutting the size of the training data in half because the svm was taking way too long
+#also switched to a linear kernel instead of svmradial because svmradial wasn't returning any results even after 90 min
+train2_index <- createDataPartition(income_train$income, p = .5, list = FALSE, times = 1)
+income_train_half <- income_train[train2_index,]
+income_train_half$income <- as.character(income_train_half$income)  #converting factor to characters
+income_train_half$income <- ifelse(income_train_half$income == ">50K", "greater50K", "less50K")   
+income_train_half_y <- data.frame(income = as.factor(income_train_half$income))
+
+#creating dummy variables
+dummies <- dummyVars(income ~ ., data = income_train_half)
+income_train_half <- predict(dummies, newdata = income_train_half)
+income_train_half <- data.frame(income_train_half)
+
+#imputing missing values - also centers and scales
+missing <- preProcess(income_train_half, "knnImpute")
+income_train_half <- predict(missing, income_train_half)
+
+#adding the y variable back to the training set so everything in one data set for ease of use
+income_train_half <- cbind(income_train_half, income_train_half_y)
+rm(income_train_half_y)  #no longer needed
+
+#repeating the above steps on the test data set for predictions
+#prepping the test data
+income_test_half <- income_test
+income_test_half$income <- as.character(income_test_half$income)
+income_test_half$income <- ifelse(income_test_half$income == ">50K", "greater50K", "less50K")
+income_test_half_y <- data.frame(income = as.factor(income_test_half$income))
+
+#creating dummy variables on the test set
+dummies <- dummyVars(income ~ ., data = income_test_half)
+income_test_half <- predict(dummies, newdata = income_test_half)
+income_test_half <- data.frame(income_test_half)
+
+#imputing missing values - also centers and scales
+missing <- preProcess(income_test_half, "knnImpute")
+income_test_half <- predict(missing, income_test_half)
+
+#adding the y variable back to the test set so everything in one data set for ease of use
+income_test_half <- cbind(income_test_half, income_test_half_y)
+rm(income_test_half_y)  #no longer needed
+rm(missing)    #no longer needed
+rm(dummies)    #no longer needed
+
 #--------------------------------- Learning Curve -----------------------------------------
 
 #Learning curve
@@ -53,27 +111,42 @@ ggplot(lrn_curve, aes(x = Training_Size, y = Accuracy, color = Data)) +
 
 #--------------------------------- Decision Tree -----------------------------------------
 
+#Learning curve - saving it because the learning curves took a long time to run on this data set
+inc_lrn_curve_tree <- learing_curve_dat(dat = income_train, proportion = (1:10)/10, outcome = 'income', method = 'C5.0Tree')
+save(inc_lrn_curve_tree, file = "income_lrn_curve_tree.rda")
+
+#plotting learning curve
+ggplot(inc_lrn_curve_tree, aes(x = Training_Size, y = Accuracy, color = Data)) +
+  geom_smooth(se = F) +
+  theme_bw() + 
+  theme(legend.position = c(0.88, 0.85),
+        legend.background = element_rect(color = 'black')) +
+  labs(title = 'Learning curve for Census Income Tree')
+
+#starting processing time
+start <- proc.time()[3]
+
 #decision tree from training data
-tree_model <- tree(income ~ ., data = income_train)
+inc_tree_model <- train(income ~ ., data = income_train, method = 'C5.0')
 
-#making predictions
-pred <- predict(tree_model, income_test, type = "class")
+#stopping processing time
+stop <- proc.time()[3]
 
-#creating a confusion matrix and calculating accuracy
-conf_mat <- confusionMatrix(pred, income_test$income, mode = 'prec_recall')
+#storing processing time
+inc_tree_time <- stop - start
+#
 
-#printing confusion matrix
-conf_mat$table
 
 #using cross validation to prune the tree
-cv_tree <- cv.tree(tree_model, FUN = prune.misclass)
+cv_tree <- cv.tree(inc_tree_model, FUN = prune.misclass)
 
-#plotting cv_tree to determine how many terminal nodes to use in the pruned tree
+#plotting results of cross validation to prune tree (model complexity curve)
 plot(cv_tree)
 
 #pruning tree according to the results of the cv_tree plot
 #using 5 terminal nodes
-tree_model_pruned <- prune.misclass(tree_model, best = 5)
+#final model
+inc_tree_model_pruned <- prune.misclass(inc_tree_model, best = 5)
 
 #plotting pruned tree
 plot(tree_model_pruned)
@@ -91,6 +164,18 @@ conf_mat_pruned$table
 
 #------------------------------- Neural Network  ------------------------------
 
+#learning curve
+inc_lrn_curve_nnet <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'nnet', na.action = na.pass)
+save(inc_lrn_curve_nnet, file = "income_lrn_curve_nnet.rda")
+
+#plotting learning curve
+ggplot(inc_lrn_curve_nnet, aes(x = Training_Size, y = Accuracy, color = Data)) +
+  geom_smooth(se = F) +
+  theme_bw() + 
+  theme(legend.position = c(0.88, 0.85),
+        legend.background = element_rect(color = 'black')) +
+  labs(title = 'Learning curve for Census Income Neural Network')
+
 #starting processing time
 start <- proc.time()[3]
 
@@ -104,13 +189,26 @@ stop <- proc.time()[3]
 orig_nnet_time <- stop - start
 #processing time = 776 seconds
 
-#making predictions
-nnet_pred <- predict(income_nnet, newdata = income_test[1:12], type = 'raw', na.action = na.pass)
+#plotting model complexity curve
+
+
+#final model if needed
+
+
+
+#making predictions on test data
+inc_nnet_pred <- predict(income_nnet, newdata = income_test[1:12], type = 'raw', na.action = na.pass)
 
 #creating a confusion matrix
-nnet_cm <- confusionMatrix(nnet_pred, income_test$income, mode = 'prec_recall')
+inc_nnet_cm <- confusionMatrix(inc_nnet_pred, income_test$income, mode = 'prec_recall')
 
 #------------------------------ Boosting  -------------------------------------
+
+#learning curve
+inc_lrn_curve_boost <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'xgbTree', na.action = na.pass)
+save(inc_lrn_curve_boost, file = "income_lrn_curve_boost.rda")
+#not working - getting errors
+
 
 #starting processing time
 start <- proc.time()[3]
@@ -129,6 +227,10 @@ boost_time <- stop - start
 #saving model since it took a long time to run
 save(income_boost, file = 'income_boost_model.rda')
 
+#model complexity curve
+
+
+
 #making predictions
 boost_pred <- predict(income_boost, newdata = income_test, type = 'raw', na.action = na.pass)
 
@@ -137,58 +239,34 @@ boost_cm <- confusionMatrix(boost_pred, income_test$income, mode = 'prec_recall'
 
 #------------------------------ SVM  ------------------------------------------
 
-#Preprocessing data to clean up the variable names for income and impute missing values
-#cutting the size of the training data in half because the svm was taking way too long
-#also switched to a linear kernel instead of svmradial because svmradial wasn't returning any results even after 90 min
-svm_index <- createDataPartition(income_train$income, p = .5, list = FALSE, times = 1)
-income_train_svm <- income_train[svm_index,]
-income_train_svm$income <- as.character(income_train_svm$income)  #converting factor to characters
-income_train_svm$income <- ifelse(income_train_svm$income == ">50K", "greater50K", "less50K")   
-income_train_svm_y <- data.frame(income = as.factor(income_train_svm$income))
+#learning curve
+inc_lrn_curve_svm <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'svmLinear')
+save(inc_lrn_curve_svm, file = "income_lrn_curve_svm.rda")
 
-#creating dummy variables
-dummies <- dummyVars(income ~ ., data = income_train_svm)
-income_train_svm <- predict(dummies, newdata = income_train_svm)
-income_train_svm <- data.frame(income_train_svm)
+#plotting learning curve
+ggplot(inc_lrn_curve_svm, aes(x = Training_Size, y = Accuracy, color = Data)) +
+  geom_smooth(se = F) +
+  theme_bw() + 
+  theme(legend.position = c(0.88, 0.85),
+        legend.background = element_rect(color = 'black')) +
+  labs(title = 'Learning curve for Census Income SVM')
 
-#imputing missing values - also centers and scales
-missing <- preProcess(income_train_svm, "knnImpute")
-income_train_svm <- predict(missing, income_train_svm)
-
-#repeating the above steps on the test data set for predictions
-#prepping the test data
-income_test_svm <- income_test
-income_test_svm$income <- as.character(income_test_svm$income)
-income_test_svm$income <- ifelse(income_test_svm$income == ">50K", "greater50K", "less50K")
-income_test_svm_y <- data.frame(income = as.factor(income_test_svm$income))
-
-#creating dummy variables on the test set
-dummies <- dummyVars(income ~ ., data = income_test_svm)
-income_test_svm <- predict(dummies, newdata = income_test_svm)
-income_test_svm <- data.frame(income_test_svm)
-
-#imputing missing values - also centers and scales
-missing <- preProcess(income_test_svm, "knnImpute")
-income_test_svm <- predict(missing, income_test_svm)
-
-
-#preprocessing done - building svm model
-ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
 
 #starting processing time
 start <- proc.time()[3]
 
 #building svm model
-income_svm_model <- train(x = income_train_svm, y = income_train_svm_y$income, method = 'svmLinear', tuneLength = 9, metric = 'Accuracy', trControl = ctrl)
+ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
+income_svm_model <- train(income ~ ., data = income_train_half, method = 'svmLinear', tuneLength = 9, metric = 'Accuracy', trControl = ctrl)
 
 #ending processing time
 stop <- proc.time()[3]
 
 #storing the time
-svm_time <- stop - start
+inc_svm_time <- stop - start
 #517 seconds
 
-#saving model to load in markdown doc since it took 25 minutes to run
+#saving model to load in markdown doc 
 #save(income_svm_model, file = 'income_svm_model.rda')
 
 #expanding the grid to try more options for C
@@ -198,7 +276,7 @@ grid <- expand.grid(C = c(0.25, 0.5, 0.75, 1, 1.25, 1.5))
 start <- proc.time()[3]
 
 #building svm model
-income_svm_model_grid <- train(x = income_train_svm, y = income_train_svm_y$income, method = 'svmLinear', tuneLength = 9, metric = 'Accuracy', tuneGrid = grid, trControl = ctrl)
+income_svm_model_grid <- train(income ~ ., data = income_train_half, method = 'svmLinear', tuneLength = 9, metric = 'Accuracy', tuneGrid = grid, trControl = ctrl)
 
 #ending processing time
 stop <- proc.time()[3]
@@ -210,75 +288,65 @@ svm_grid_time <- stop - start
 #saving grid model to load in markdown doc
 save(income_svm_model_grid, file = 'income_svm_model_grid.rda')
 
-#making predictions
-svm_pred <- predict(income_svm_model, newdata = income_test_svm)
+#plotting results of grid (model complexity curve)
+
+
+#final model if needed
+
+
+
+#making predictions 
+inc_svm_pred <- predict(income_svm_model, newdata = income_test_half)
 
 #creating a confustion matrix
-conf_mat_svm <- confusionMatrix(svm_pred, income_test_svm_y$income, mode = 'prec_recall')
-conf_mat_svm$table
+inc_conf_mat_svm <- confusionMatrix(inc_svm_pred, income_test_half$income, mode = 'prec_recall')
+inc_conf_mat_svm$table
 
 
 
 #------------------------------ KNN  ------------------------------------------
 
-#similar to knn, the KNN model wouldn't run on the full data so repeating the preprocessing steps from the knn model
-knn_index <- createDataPartition(income_train$income, p = .5, list = FALSE, times = 1)
-income_train_knn <- income_train[knn_index,]
-income_train_knn$income <- as.character(income_train_knn$income)  #converting factor to characters
-income_train_knn$income <- ifelse(income_train_knn$income == ">50K", "greater50K", "less50K")   
-income_train_knn_y <- data.frame(income = as.factor(income_train_knn$income))
+#learning curve
+inc_lrn_curve_knn <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'knn')
+save(inc_lrn_curve_knn, file = "income_lrn_curve_knn.rda")
 
-#creating dummy variables
-dummies <- dummyVars(income ~ ., data = income_train_knn)
-income_train_knn <- predict(dummies, newdata = income_train_knn)
-income_train_knn <- data.frame(income_train_knn)
-
-#imputing missing values - also centers and scales
-missing <- preProcess(income_train_knn, "knnImpute")
-income_train_knn <- predict(missing, income_train_knn)
-
-#repeating the above steps on the test data set for predictions
-#prepping the test data
-income_test_knn <- income_test
-income_test_knn$income <- as.character(income_test_knn$income)
-income_test_knn$income <- ifelse(income_test_knn$income == ">50K", "greater50K", "less50K")
-income_test_knn_y <- data.frame(income = as.factor(income_test_knn$income))
-
-#creating dummy variables on the test set
-dummies <- dummyVars(income ~ ., data = income_test_knn)
-income_test_knn <- predict(dummies, newdata = income_test_knn)
-income_test_knn <- data.frame(income_test_knn)
-
-#imputing missing values - also centers and scales
-missing <- preProcess(income_test_knn, "knnImpute")
-income_test_knn <- predict(missing, income_test_knn)
-
-
-#preprocessing of data done - building model
-ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
+#plotting learning curve
+ggplot(inc_lrn_curve_knn, aes(x = Training_Size, y = Accuracy, color = Data)) +
+  geom_smooth(se = F) +
+  theme_bw() + 
+  theme(legend.position = c(0.88, 0.85),
+        legend.background = element_rect(color = 'black')) +
+  labs(title = 'Learning curve for Census Income KNN')
 
 #starting processing time
 start <- proc.time()[3]
 
-#KNN model
-knn_model2 <- train(x = income_train_knn, y = income_train_knn_y$income, method = 'knn', metric = 'Accuracy', trControl = ctrl, tuneLength = 20)
+#building KNN model
+ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
+inc_knn_model <- train(income ~ ., data = income_train_half, method = 'knn', metric = 'Accuracy', trControl = ctrl, tuneLength = 20)
 
 #ending processing time
 stop <- proc.time()[3]
 
 #calculating the processing time
-knn_time <- stop - start
+inc_knn_time <- stop - start
 #884 seconds
 
 #saving model to load into markdown doc because it took about 30 minutes to run
-#save(knn_model2, file = 'income_knn_model2.rda')
+#save(knn_model, file = 'income_knn_model.rda')
+
+#plotting model complexity curve
+
+#building final model if needed
+
+
 
 #making predictions on the test data
-knn_pred <- predict(knn_model2, newdata = income_test_knn)
+inc_knn_pred <- predict(inc_knn_model, newdata = income_test_half)
 
 #creating a confusion matrix
-conf_mat_knn <- confusionMatrix(knn_pred, income_test_knn_y$income, mode = 'prec_recall')
-conf_mat_knn$table
+inc_conf_mat_knn <- confusionMatrix(inc_knn_pred, income_test_half$income, mode = 'prec_recall')
+inc_conf_mat_knn$table
 
 
 
@@ -286,17 +354,14 @@ conf_mat_knn$table
 
 
 #running learning curves
-inc_lrn_curve_tree <- learing_curve_dat(dat = income_train, proportion = (1:10)/10, outcome = 'income', method = 'C5.0Tree')
-save(inc_lrn_curve_tree, file = "income_lrn_curve_tree.rda")
+
 
 inc_lrn_curve_boost <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'xgbTree', na.action = na.pass)
 save(inc_lrn_curve_boost, file = "income_lrn_curve_boost.rda")
 
-inc_lrn_curve_nnet <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'nnet', na.action = na.pass)
-save(inc_lrn_curve_nnet, file = "income_lrn_curve_nnet.rda")
 
-inc_lrn_curve_svm <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'svmLinear')
-save(inc_lrn_curve_svm, file = "income_lrn_curve_svm.rda")
+
+
 
 inc_lrn_curve_knn <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'knn')
 save(inc_lrn_curve_knn, file = "income_lrn_curve_knn.rda")

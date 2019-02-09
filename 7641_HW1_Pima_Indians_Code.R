@@ -38,10 +38,11 @@ pima_train <- pima_data[trainIndex,]
 pima_test <- pima_data[-trainIndex,]
 
 
-#--------------------------------- Decision Tree -----------------------------------------
+#--------------------------------- Learning Curve -----------------------------------------
 
 #Learning curve
 lrn_curve <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10, outcome = 'Diagnosis', method = 'svmLinear2', test_prop = .2)
+
 
 #plotting learning curve
 ggplot(lrn_curve, aes(x = Training_Size, y = Accuracy, color = Data)) +
@@ -84,13 +85,48 @@ pima_pruned_cm$table
 
 #------------------------------- Neural Network  ------------------------------
 
+#starting processing time
+start <- proc.time()[3]
+
+#building model
+ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
+pima_nn <- train(Diagnosis ~ ., data = pima_train, method = 'nnet', trControl = ctrl)
+
+#ending processing time
+stop <- proc.time()[3]
+
+#storing processing time
+pima_nn_time <- stop - start
+
+#making predictions
+pima_nn_pred <- predict(pima_nn, newdata = pima_test, type = 'raw')
+
+#creating a confusion matrix
+pima_nn_cm <- confusionMatrix(pima_nn_pred, pima_test$Diagnosis, mode = 'prec_recall')
 
 
 
 
 #------------------------------ Boosting  -------------------------------------
 
+#starting processing time
+start <- proc.time()[3]
 
+#building model
+ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
+pima_boost <- train(Diagnosis ~ ., data = pima_train, method = 'xgbTree', trControl = ctrl)
+
+#ending processing time
+stop <- proc.time()[3]
+
+#storing processing time
+pima_boost_time <- stop - start
+
+#making predictions
+pima_boost_pred <- predict(pima_boost, newdata = pima_test, type = 'rwa')
+
+#creating a confusion matrix
+pima_boost_cm <- confusionMatrix(pima_boost_pred, pima_test$Diagnosis, mode = 'prec_recall')
 
 
 #------------------------------ SVM  ------------------------------------------
@@ -110,7 +146,30 @@ pima_svm_pred <- predict(pima_svm_model, newdata = pima_test)
 #creating confusion matrix
 pima_svm_cm <- confusionMatrix(pima_svm_pred, pima_test$Diagnosis, mode = 'prec_recall')
 
+
+
+
 #------------------------------ KNN  ------------------------------------------
+
+#starting processing time
+start <- proc.time()[3]
+
+#building knn model
+ctrl <- trainControl(method = ‘repeatedcv’, repeats = 5)
+pima_knn_model <- train(Diagnosis ~ ., data = pima_train, method = 'knn', metric = 'Accuracy', trControl = ctrl)
+
+#stopping processing time
+stop <- proc.time()[3]
+
+#calculating processing time
+pima_knn_time <- stop - start
+
+#making predictions on test data
+pima_knn_pred <- predict(pima_knn_model, newdata = pima_test)
+
+#creating a confustion matrix
+pima_knn_cm <- confusionMatrix(pima_knn_pred, pima_test$Diagnosis, mode = 'prec_recall')
+pima_knn_cm$table
 
 
 

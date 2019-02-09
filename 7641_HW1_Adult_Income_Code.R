@@ -95,18 +95,6 @@ rm(income_test_half_y)  #no longer needed
 rm(missing)    #no longer needed
 rm(dummies)    #no longer needed
 
-#--------------------------------- Learning Curve -----------------------------------------
-
-#Learning curve
-lrn_curve <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'svmLinear2', test_prop = .2)
-
-#plotting learning curve
-ggplot(lrn_curve, aes(x = Training_Size, y = Accuracy, color = Data)) +
-  geom_smooth(se = F) +
-  theme_bw() + 
-  theme(legend.position = c(0.88, 0.85),
-        legend.background = element_rect(color = 'black')) +
-  labs(title = 'Learning curve for Pima Indians Data')
 
 
 #--------------------------------- Decision Tree -----------------------------------------
@@ -127,14 +115,15 @@ ggplot(inc_lrn_curve_tree, aes(x = Training_Size, y = Accuracy, color = Data)) +
 start <- proc.time()[3]
 
 #decision tree from training data
-inc_tree_model <- train(income ~ ., data = income_train, method = 'C5.0')
+inc_tree_model <- tree(income ~ ., data = income_train)
+save(inc_tree_model, file = 'income_tree_model.rda')
 
 #stopping processing time
 stop <- proc.time()[3]
 
 #storing processing time
 inc_tree_time <- stop - start
-#
+#1 second
 
 
 #using cross validation to prune the tree
@@ -147,6 +136,7 @@ plot(cv_tree)
 #using 5 terminal nodes
 #final model
 inc_tree_model_pruned <- prune.misclass(inc_tree_model, best = 5)
+save(inc_tree_model_pruned, file = 'inc_tree_model_pruned.rda')
 
 #plotting pruned tree
 plot(tree_model_pruned)
@@ -162,10 +152,12 @@ conf_mat_pruned$table
 #removing variables not needed anymore
 #rm(conf_mat, conf_mat_pruned, cv_tree, pred, pred_pruned)
 
+
+
 #------------------------------- Neural Network  ------------------------------
 
 #learning curve
-inc_lrn_curve_nnet <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'nnet', na.action = na.pass)
+inc_lrn_curve_nnet <- learing_curve_dat(dat = income_train_half, proportion = (1:10)/10, outcome = 'income', method = 'nnet', na.action = na.pass)
 save(inc_lrn_curve_nnet, file = "income_lrn_curve_nnet.rda")
 
 #plotting learning curve
@@ -181,12 +173,13 @@ start <- proc.time()[3]
 
 #building neural network
 income_nnet <- train(income ~ ., data = income_train, method = 'nnet', na.action = na.pass)
+save(income_nnet, file = 'income_nnet_model.rda')
 
 #ending processing time
 stop <- proc.time()[3]
 
 #storing processing time
-orig_nnet_time <- stop - start
+inc_nnet_time <- stop - start
 #processing time = 776 seconds
 
 #plotting model complexity curve
@@ -205,9 +198,9 @@ inc_nnet_cm <- confusionMatrix(inc_nnet_pred, income_test$income, mode = 'prec_r
 #------------------------------ Boosting  -------------------------------------
 
 #learning curve
-inc_lrn_curve_boost <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'xgbTree', na.action = na.pass)
-save(inc_lrn_curve_boost, file = "income_lrn_curve_boost.rda")
-#not working - getting errors
+#inc_lrn_curve_boost <- learing_curve_dat(dat = income_train_half, proportion = (1:10)/10, outcome = 'income', method = 'xgbTree', na.action = na.pass)
+#save(inc_lrn_curve_boost, file = "income_lrn_curve_boost.rda")
+#not working - getting errors - tried a different package and it started running but was going to take an eternity so I stopped it
 
 
 #starting processing time
@@ -240,7 +233,7 @@ boost_cm <- confusionMatrix(boost_pred, income_test$income, mode = 'prec_recall'
 #------------------------------ SVM  ------------------------------------------
 
 #learning curve
-inc_lrn_curve_svm <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'svmLinear')
+inc_lrn_curve_svm <- learing_curve_dat(dat = income_train_half, proportion = (1:10)/10, outcome = 'income', method = 'svmLinear')
 save(inc_lrn_curve_svm, file = "income_lrn_curve_svm.rda")
 
 #plotting learning curve
@@ -307,7 +300,7 @@ inc_conf_mat_svm$table
 #------------------------------ KNN  ------------------------------------------
 
 #learning curve
-inc_lrn_curve_knn <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'knn')
+inc_lrn_curve_knn <- learing_curve_dat(dat = income_train_half, proportion = (1:10)/10, outcome = 'income', method = 'knn')
 save(inc_lrn_curve_knn, file = "income_lrn_curve_knn.rda")
 
 #plotting learning curve
@@ -324,6 +317,7 @@ start <- proc.time()[3]
 #building KNN model
 ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
 inc_knn_model <- train(income ~ ., data = income_train_half, method = 'knn', metric = 'Accuracy', trControl = ctrl, tuneLength = 20)
+save(inc_knn_model, file = 'income_knn_model.rda')
 
 #ending processing time
 stop <- proc.time()[3]
@@ -332,8 +326,6 @@ stop <- proc.time()[3]
 inc_knn_time <- stop - start
 #884 seconds
 
-#saving model to load into markdown doc because it took about 30 minutes to run
-#save(knn_model, file = 'income_knn_model.rda')
 
 #plotting model complexity curve
 
@@ -350,18 +342,3 @@ inc_conf_mat_knn$table
 
 
 
-
-
-
-#running learning curves
-
-
-inc_lrn_curve_boost <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'xgbTree', na.action = na.pass)
-save(inc_lrn_curve_boost, file = "income_lrn_curve_boost.rda")
-
-
-
-
-
-inc_lrn_curve_knn <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'knn')
-save(inc_lrn_curve_knn, file = "income_lrn_curve_knn.rda")

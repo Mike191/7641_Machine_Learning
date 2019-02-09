@@ -91,17 +91,14 @@ income_test_half <- predict(missing, income_test_half)
 
 #adding the y variable back to the test set so everything in one data set for ease of use
 income_test_half <- cbind(income_test_half, income_test_half_y)
-rm(income_test_half_y)  #no longer needed
-rm(missing)    #no longer needed
-rm(dummies)    #no longer needed
-
+rm(trainIndex, train2_index, missing, dummies, income_test_half_y)  #cleaning up unneeded variables
 
 
 #--------------------------------- Decision Tree -----------------------------------------
 
 #Learning curve - saving it because the learning curves took a long time to run on this data set
 inc_lrn_curve_tree <- learing_curve_dat(dat = income_train, proportion = (1:10)/10, outcome = 'income', method = 'C5.0Tree')
-save(inc_lrn_curve_tree, file = "income_lrn_curve_tree.rda")
+#save(inc_lrn_curve_tree, file = "income_lrn_curve_tree.rda")
 
 #plotting learning curve
 ggplot(inc_lrn_curve_tree, aes(x = Training_Size, y = Accuracy, color = Data)) +
@@ -116,7 +113,7 @@ start <- proc.time()[3]
 
 #decision tree from training data
 inc_tree_model <- tree(income ~ ., data = income_train)
-save(inc_tree_model, file = 'income_tree_model.rda')
+#save(inc_tree_model, file = 'income_tree_model.rda')
 
 #stopping processing time
 stop <- proc.time()[3]
@@ -136,7 +133,7 @@ plot(cv_tree)
 #using 5 terminal nodes
 #final model
 inc_tree_model_pruned <- prune.misclass(inc_tree_model, best = 5)
-save(inc_tree_model_pruned, file = 'inc_tree_model_pruned.rda')
+#save(inc_tree_model_pruned, file = 'income_tree_model_pruned.rda')
 
 #plotting pruned tree
 plot(tree_model_pruned)
@@ -158,7 +155,7 @@ conf_mat_pruned$table
 
 #learning curve
 inc_lrn_curve_nnet <- learing_curve_dat(dat = income_train_half, proportion = (1:10)/10, outcome = 'income', method = 'nnet', na.action = na.pass)
-save(inc_lrn_curve_nnet, file = "income_lrn_curve_nnet.rda")
+#save(inc_lrn_curve_nnet, file = "income_lrn_curve_nnet.rda")
 
 #plotting learning curve
 ggplot(inc_lrn_curve_nnet, aes(x = Training_Size, y = Accuracy, color = Data)) +
@@ -173,7 +170,7 @@ start <- proc.time()[3]
 
 #building neural network
 income_nnet <- train(income ~ ., data = income_train, method = 'nnet', na.action = na.pass)
-save(income_nnet, file = 'income_nnet_model.rda')
+#save(income_nnet, file = 'income_nnet_model.rda')
 
 #ending processing time
 stop <- proc.time()[3]
@@ -209,6 +206,7 @@ start <- proc.time()[3]
 #building model
 ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
 income_boost <- train(income ~ ., data = income_train, method = 'xgbTree', trControl = ctrl, na.action = na.pass)
+#save(income_boost, file = 'income_boost_model.rda')
 
 #ending processing time
 stop <- proc.time()[3]
@@ -217,8 +215,6 @@ stop <- proc.time()[3]
 boost_time <- stop - start
 #2477 seconds
 
-#saving model since it took a long time to run
-save(income_boost, file = 'income_boost_model.rda')
 
 #model complexity curve
 
@@ -234,7 +230,7 @@ boost_cm <- confusionMatrix(boost_pred, income_test$income, mode = 'prec_recall'
 
 #learning curve
 inc_lrn_curve_svm <- learing_curve_dat(dat = income_train_half, proportion = (1:10)/10, outcome = 'income', method = 'svmLinear')
-save(inc_lrn_curve_svm, file = "income_lrn_curve_svm.rda")
+#save(inc_lrn_curve_svm, file = "income_lrn_curve_svm.rda")
 
 #plotting learning curve
 ggplot(inc_lrn_curve_svm, aes(x = Training_Size, y = Accuracy, color = Data)) +
@@ -251,6 +247,7 @@ start <- proc.time()[3]
 #building svm model
 ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
 income_svm_model <- train(income ~ ., data = income_train_half, method = 'svmLinear', tuneLength = 9, metric = 'Accuracy', trControl = ctrl)
+#save(income_svm_model, file = 'income_svm_model.rda')
 
 #ending processing time
 stop <- proc.time()[3]
@@ -259,8 +256,6 @@ stop <- proc.time()[3]
 inc_svm_time <- stop - start
 #517 seconds
 
-#saving model to load in markdown doc 
-#save(income_svm_model, file = 'income_svm_model.rda')
 
 #expanding the grid to try more options for C
 grid <- expand.grid(C = c(0.25, 0.5, 0.75, 1, 1.25, 1.5))
@@ -279,7 +274,7 @@ svm_grid_time <- stop - start
 #3114 seconds
 
 #saving grid model to load in markdown doc
-save(income_svm_model_grid, file = 'income_svm_model_grid.rda')
+#save(income_svm_model_grid, file = 'income_svm_model_grid.rda')
 
 #plotting results of grid (model complexity curve)
 
@@ -301,7 +296,7 @@ inc_conf_mat_svm$table
 
 #learning curve
 inc_lrn_curve_knn <- learing_curve_dat(dat = income_train_half, proportion = (1:10)/10, outcome = 'income', method = 'knn')
-save(inc_lrn_curve_knn, file = "income_lrn_curve_knn.rda")
+#save(inc_lrn_curve_knn, file = "income_lrn_curve_knn.rda")
 
 #plotting learning curve
 ggplot(inc_lrn_curve_knn, aes(x = Training_Size, y = Accuracy, color = Data)) +
@@ -317,7 +312,7 @@ start <- proc.time()[3]
 #building KNN model
 ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
 inc_knn_model <- train(income ~ ., data = income_train_half, method = 'knn', metric = 'Accuracy', trControl = ctrl, tuneLength = 20)
-save(inc_knn_model, file = 'income_knn_model.rda')
+#save(inc_knn_model, file = 'income_knn_model.rda')
 
 #ending processing time
 stop <- proc.time()[3]

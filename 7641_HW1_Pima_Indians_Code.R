@@ -69,7 +69,7 @@ start <- proc.time()[3]
 
 #creating tree using training data
 pima_tree_model <- tree(Diagnosis ~ ., data = pima_train)
-save(pima_tree_model, file = 'pima_tree_model.rda')
+#save(pima_tree_model, file = 'pima_tree_model.rda')
 
 #stopping processing time
 stop <- proc.time()[3]
@@ -88,6 +88,7 @@ plot(pima_cv_tree)
 #using 5 terminal nodes
 #final tree model
 pima_pruned_tree <- prune.misclass(pima_tree_model, best = 5)
+#save(pima_pruned_tree, file = 'pima_tree_model_pruned.rda')
 
 #making predictions on the pruned tree with the test set
 pima_pruned_pred <- predict(pima_pruned_tree, pima_test, type = 'class')
@@ -101,7 +102,7 @@ pima_pruned_cm$table
 
 #Learning curve
 pima_lrn_curve_nn <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10, outcome = 'Diagnosis', method = 'nnet')
-save(pima_lrn_curve_nn, file = 'pima_lrn_curve_nn.rda')
+#save(pima_lrn_curve_nn, file = 'pima_lrn_curve_nn.rda')
 
 #plotting learning curve
 ggplot(pima_lrn_curve_nn, aes(x = Training_Size, y = Accuracy, color = Data)) +
@@ -117,7 +118,7 @@ start <- proc.time()[3]
 #building model
 ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
 pima_nn_model <- train(Diagnosis ~ ., data = pima_train, method = 'nnet', trControl = ctrl)
-save(pima_nn_model, file = 'pima_nn_model.rda')
+#save(pima_nn_model, file = 'pima_nn_model.rda')
 
 #ending processing time
 stop <- proc.time()[3]
@@ -143,7 +144,7 @@ pima_nn_cm <- confusionMatrix(pima_nn_pred, pima_test$Diagnosis, mode = 'prec_re
 
 #Learning curve
 pima_lrn_curve_boost <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10, outcome = 'Diagnosis', method = 'xgbTree')
-save(pima_lrn_curve_boost, file = 'pima_lrn_curve_boost.rda')
+#save(pima_lrn_curve_boost, file = 'pima_lrn_curve_boost.rda')
 
 #plotting learning curve
 ggplot(pima_lrn_curve_boost, aes(x = Training_Size, y = Accuracy, color = Data)) +
@@ -159,7 +160,7 @@ start <- proc.time()[3]
 #building model
 ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
 pima_boost_model <- train(Diagnosis ~ ., data = pima_train, method = 'xgbTree', trControl = ctrl)
-save(pima_boost_model, file = 'pima_boost_model.rda')
+#save(pima_boost_model, file = 'pima_boost_model.rda')
 
 #ending processing time
 stop <- proc.time()[3]
@@ -181,7 +182,7 @@ pima_boost_cm <- confusionMatrix(pima_boost_pred, pima_test$Diagnosis, mode = 'p
 
 #Learning curve
 pima_lrn_curve_svm <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10, outcome = 'Diagnosis', method = 'svmLinear')
-save(pima_lrn_curve_svm, file = 'pima_lrn_curve_svm.rda')
+#save(pima_lrn_curve_svm, file = 'pima_lrn_curve_svm.rda')
 
 #plotting learning curve
 ggplot(pima_lrn_curve_svm, aes(x = Training_Size, y = Accuracy, color = Data)) +
@@ -197,7 +198,7 @@ start <- proc.time()[3]
 #building svm model
 ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
 pima_svm_model <- train(Diagnosis ~ ., data = pima_train, method = 'svmLinear', tuneLength = 9, metric = 'Accuracy', trControl = ctrl)
-save(pima_svm_model, file = "pima_svm_model.rda")
+#save(pima_svm_model, file = "pima_svm_model.rda")
 
 #stopping processing time
 stop <- proc.time()[3]
@@ -215,7 +216,7 @@ start <- proc.time()[3]
 
 #building svm model
 pima_svm_model_grid <- train(Diagnosis ~ ., data = pima_train, method = 'svmLinear', tuneLength = 9, metric = 'Accuracy', tuneGrid = grid, trControl = ctrl)
-save(pima_svm_model_grid, file = 'pima_svm_model_grid.rda')
+#save(pima_svm_model_grid, file = 'pima_svm_model_grid.rda')
 
 #ending processing time
 stop <- proc.time()[3]
@@ -240,7 +241,7 @@ pima_svm_cm <- confusionMatrix(pima_svm_pred, pima_test$Diagnosis, mode = 'prec_
 
 #Learning curve
 pima_lrn_curve_knn <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10, outcome = 'Diagnosis', method = 'knn')
-save(pima_lrn_curve_knn, file = 'pima_lrn_curve_knn.rda')
+#save(pima_lrn_curve_knn, file = 'pima_lrn_curve_knn.rda')
 
 #plotting learning curve
 ggplot(pima_lrn_curve_knn, aes(x = Training_Size, y = Accuracy, color = Data)) +
@@ -256,7 +257,7 @@ start <- proc.time()[3]
 #building knn model
 ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
 pima_knn_model <- train(Diagnosis ~ ., data = pima_train, method = 'knn', metric = 'Accuracy', trControl = ctrl)
-save(pima_knn_model, file = 'pima_knn_model.rda')
+#save(pima_knn_model, file = 'pima_knn_model.rda')
 
 #stopping processing time
 stop <- proc.time()[3]

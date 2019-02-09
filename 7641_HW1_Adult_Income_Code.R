@@ -37,6 +37,19 @@ income_train <- income_data[trainIndex,]
 income_test <- income_data[-trainIndex,]
 
 
+#--------------------------------- Learning Curve -----------------------------------------
+
+#Learning curve
+lrn_curve <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'svmLinear2', test_prop = .2)
+
+#plotting learning curve
+ggplot(lrn_curve, aes(x = Training_Size, y = Accuracy, color = Data)) +
+  geom_smooth(se = F) +
+  theme_bw() + 
+  theme(legend.position = c(0.88, 0.85),
+        legend.background = element_rect(color = 'black')) +
+  labs(title = 'Learning curve for Pima Indians Data')
+
 
 #--------------------------------- Decision Tree -----------------------------------------
 
@@ -139,7 +152,7 @@ income_train_svm <- predict(dummies, newdata = income_train_svm)
 income_train_svm <- data.frame(income_train_svm)
 
 #imputing missing values - also centers and scales
-missing <- preProcess(income_train_svm, "svmImpute")
+missing <- preProcess(income_train_svm, "knnImpute")
 income_train_svm <- predict(missing, income_train_svm)
 
 #repeating the above steps on the test data set for predictions
@@ -155,7 +168,7 @@ income_test_svm <- predict(dummies, newdata = income_test_svm)
 income_test_svm <- data.frame(income_test_svm)
 
 #imputing missing values - also centers and scales
-missing <- preProcess(income_test_svm, "svmImpute")
+missing <- preProcess(income_test_svm, "knnImpute")
 income_test_svm <- predict(missing, income_test_svm)
 
 
@@ -173,10 +186,29 @@ stop <- proc.time()[3]
 
 #storing the time
 svm_time <- stop - start
-#517
+#517 seconds
 
 #saving model to load in markdown doc since it took 25 minutes to run
 #save(income_svm_model, file = 'income_svm_model.rda')
+
+#expanding the grid to try more options for C
+grid <- expand.grid(C = c(0.25, 0.5, 0.75, 1, 1.25, 1.5))
+
+#starting processing time
+start <- proc.time()[3]
+
+#building svm model
+income_svm_model_grid <- train(x = income_train_svm, y = income_train_svm_y$income, method = 'svmLinear', tuneLength = 9, metric = 'Accuracy', tuneGrid = grid, trControl = ctrl)
+
+#ending processing time
+stop <- proc.time()[3]
+
+#storing the time
+svm_grid_time <- stop - start
+#3114 seconds
+
+#saving grid model to load in markdown doc
+save(income_svm_model_grid, file = 'income_svm_model_grid.rda')
 
 #making predictions
 svm_pred <- predict(income_svm_model, newdata = income_test_svm)
@@ -248,3 +280,23 @@ knn_pred <- predict(knn_model2, newdata = income_test_knn)
 conf_mat_knn <- confusionMatrix(knn_pred, income_test_knn_y$income, mode = 'prec_recall')
 conf_mat_knn$table
 
+
+
+
+
+
+#running learning curves
+inc_lrn_curve_tree <- learing_curve_dat(dat = income_train, proportion = (1:10)/10, outcome = 'income', method = 'C5.0Tree')
+save(inc_lrn_curve_tree, file = "income_lrn_curve_tree.rda")
+
+inc_lrn_curve_boost <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'xgbTree', na.action = na.pass)
+save(inc_lrn_curve_boost, file = "income_lrn_curve_boost.rda")
+
+inc_lrn_curve_nnet <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'nnet', na.action = na.pass)
+save(inc_lrn_curve_nnet, file = "income_lrn_curve_nnet.rda")
+
+inc_lrn_curve_svm <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'svmLinear')
+save(inc_lrn_curve_svm, file = "income_lrn_curve_svm.rda")
+
+inc_lrn_curve_knn <- learing_curve_dat(dat = curve_dat, proportion = (1:10)/10, outcome = 'income', method = 'knn')
+save(inc_lrn_curve_knn, file = "income_lrn_curve_knn.rda")

@@ -140,7 +140,7 @@ plot(tree_model_pruned)
 text(tree_model_pruned)
 
 #making predicitons from pruned tree
-pred_pruned <- predict(tree_model_pruned, income_test, type = 'class')
+pred_pruned <- predict(inc_tree_model_pruned, income_test, type = 'class')
 
 #creating a confusion matrix and calculating accuracy of the pruned tree
 conf_mat_pruned <- confusionMatrix(pred_pruned, income_test$income, mode = 'prec_recall')
@@ -161,7 +161,7 @@ inc_lrn_curve_nnet <- learing_curve_dat(dat = income_train_half, proportion = (1
 ggplot(inc_lrn_curve_nnet, aes(x = Training_Size, y = Accuracy, color = Data)) +
   geom_smooth(se = F) +
   theme_bw() + 
-  theme(legend.position = c(0.88, 0.85),
+  theme(legend.position = "bottom",
         legend.background = element_rect(color = 'black')) +
   labs(title = 'Learning curve for Census Income Neural Network')
 
@@ -169,7 +169,8 @@ ggplot(inc_lrn_curve_nnet, aes(x = Training_Size, y = Accuracy, color = Data)) +
 start <- proc.time()[3]
 
 #building neural network
-income_nnet <- train(income ~ ., data = income_train, method = 'nnet', na.action = na.pass)
+ctrl <- trainControl(method = 'repeatedcv', repeats = 5)
+income_nnet <- train(income ~ ., data = income_train, method = 'nnet', trControl = ctrl, na.action = na.pass)
 #save(income_nnet, file = 'income_nnet_model.rda')
 
 #ending processing time
@@ -217,14 +218,14 @@ boost_time <- stop - start
 
 
 #model complexity curve
-
-
+plot(income_boost)
 
 #making predictions
 boost_pred <- predict(income_boost, newdata = income_test, type = 'raw', na.action = na.pass)
 
 #creating confusion matrix
 boost_cm <- confusionMatrix(boost_pred, income_test$income, mode = 'prec_recall')
+boost_cm$table
 
 #------------------------------ SVM  ------------------------------------------
 
@@ -236,7 +237,7 @@ inc_lrn_curve_svm <- learing_curve_dat(dat = income_train_half, proportion = (1:
 ggplot(inc_lrn_curve_svm, aes(x = Training_Size, y = Accuracy, color = Data)) +
   geom_smooth(se = F) +
   theme_bw() + 
-  theme(legend.position = c(0.88, 0.85),
+  theme(legend.position = "bottom",
         legend.background = element_rect(color = 'black')) +
   labs(title = 'Learning curve for Census Income SVM')
 
@@ -277,14 +278,13 @@ svm_grid_time <- stop - start
 #save(income_svm_model_grid, file = 'income_svm_model_grid.rda')
 
 #plotting results of grid (model complexity curve)
+#plotting model complexity
+plot(income_svm_model_grid) 
+title('Cross Validation Results')
 
 
-#final model if needed
-
-
-
-#making predictions 
-inc_svm_pred <- predict(income_svm_model, newdata = income_test_half)
+#making predictions on the test data
+inc_svm_pred <- predict(income_svm_model_grid, newdata = income_test_half[1:50])
 
 #creating a confustion matrix
 inc_conf_mat_svm <- confusionMatrix(inc_svm_pred, income_test_half$income, mode = 'prec_recall')
@@ -302,7 +302,7 @@ inc_lrn_curve_knn <- learing_curve_dat(dat = income_train_half, proportion = (1:
 ggplot(inc_lrn_curve_knn, aes(x = Training_Size, y = Accuracy, color = Data)) +
   geom_smooth(se = F) +
   theme_bw() + 
-  theme(legend.position = c(0.88, 0.85),
+  theme(legend.position = "bottom",
         legend.background = element_rect(color = 'black')) +
   labs(title = 'Learning curve for Census Income KNN')
 
@@ -322,11 +322,9 @@ inc_knn_time <- stop - start
 #884 seconds
 
 
-#plotting model complexity curve
-
-#building final model if needed
-
-
+#plotting values of K (model complexity curve)
+plot(inc_knn_model)
+title("KNN Cross Validation")
 
 #making predictions on the test data
 inc_knn_pred <- predict(inc_knn_model, newdata = income_test_half)

@@ -54,13 +54,13 @@ pima_test <- pima_data[-trainIndex,]
 
 #Learning curve
 pima_lrn_curve_tree <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10, outcome = 'Diagnosis', method = 'C5.0Tree')
-save(pima_lrn_curve_tree, file = 'pima_lrn_curve_tree.rda')
+#save(pima_lrn_curve_tree, file = 'pima_lrn_curve_tree.rda')
 
 #plotting learning curve
 ggplot(pima_lrn_curve_tree, aes(x = Training_Size, y = Accuracy, color = Data)) +
   geom_smooth(se = F) +
   theme_bw() + 
-  theme(legend.position = c(0.88, 0.85),
+  theme(legend.position = "bottom",
         legend.background = element_rect(color = 'black')) +
   labs(title = 'Learning curve for Pima Indians Tree')
 
@@ -82,16 +82,12 @@ pima_tree_time <- stop - start
 pima_cv_tree <- cv.tree(pima_tree_model, FUN = prune.misclass)
 
 #plotting results of cross validation to prune tree (model complexity curve)
-plot(pima_cv_tree)
+plot(x = pima_cv_tree$size, y = pima_cv_tree$dev, type = 'b', col = 'blue', xlab = 'Tree Size', ylab = 'Miscassifiations')
+title('Cross Validation Results')
 
-#pruning tree according to the results of the cross validation plot
-#using 5 terminal nodes
-#final tree model
-pima_pruned_tree <- prune.misclass(pima_tree_model, best = 5)
-#save(pima_pruned_tree, file = 'pima_tree_model_pruned.rda')
-
+#cross validation showed that 11 terminal nodes was the best so using original tree as final
 #making predictions on the pruned tree with the test set
-pima_pruned_pred <- predict(pima_pruned_tree, pima_test, type = 'class')
+pima_pruned_pred <- predict(pima_tree_model, pima_test, type = 'class')
 
 #creating a confusion matrix for the pruned tree
 pima_pruned_cm <- confusionMatrix(pima_pruned_pred, pima_test$Diagnosis, mode = 'prec_recall')
@@ -108,7 +104,7 @@ pima_lrn_curve_nn <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10, 
 ggplot(pima_lrn_curve_nn, aes(x = Training_Size, y = Accuracy, color = Data)) +
   geom_smooth(se = F) +
   theme_bw() + 
-  theme(legend.position = c(0.88, 0.85),
+  theme(legend.position = "bottom",
         legend.background = element_rect(color = 'black')) +
   labs(title = 'Learning curve for Pima Indians Neural Network')
 
@@ -150,7 +146,7 @@ pima_lrn_curve_boost <- learing_curve_dat(dat = pima_data, proportion = (1:10)/1
 ggplot(pima_lrn_curve_boost, aes(x = Training_Size, y = Accuracy, color = Data)) +
   geom_smooth(se = F) +
   theme_bw() + 
-  theme(legend.position = c(0.88, 0.85),
+  theme(legend.position = "bottom",
         legend.background = element_rect(color = 'black')) +
   labs(title = 'Learning curve for Pima Indians xbgBoost')
 
@@ -188,7 +184,7 @@ pima_lrn_curve_svm <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10,
 ggplot(pima_lrn_curve_svm, aes(x = Training_Size, y = Accuracy, color = Data)) +
   geom_smooth(se = F) +
   theme_bw() + 
-  theme(legend.position = c(0.88, 0.85),
+  theme(legend.position = "bottom",
         legend.background = element_rect(color = 'black')) +
   labs(title = 'Learning curve for Pima Indians SVM')
 
@@ -247,7 +243,7 @@ pima_lrn_curve_knn <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10,
 ggplot(pima_lrn_curve_knn, aes(x = Training_Size, y = Accuracy, color = Data)) +
   geom_smooth(se = F) +
   theme_bw() + 
-  theme(legend.position = c(0.88, 0.85),
+  theme(legend.position = "bottom",
         legend.background = element_rect(color = 'black')) +
   labs(title = 'Learning curve for Pima Indians KNN')
 

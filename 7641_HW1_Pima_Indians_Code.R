@@ -60,8 +60,9 @@ pima_lrn_curve_tree <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10
 ggplot(pima_lrn_curve_tree, aes(x = Training_Size, y = Accuracy, color = Data)) +
   geom_smooth(se = F) +
   theme_bw() + 
-  theme(legend.position = "bottom",
-        legend.background = element_rect(color = 'black')) +
+  theme(legend.position = c(.88, .15),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 7)) +
   labs(title = 'Learning curve for Pima Indians Tree')
 
 #staring processing time
@@ -104,8 +105,9 @@ pima_lrn_curve_nn <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10, 
 ggplot(pima_lrn_curve_nn, aes(x = Training_Size, y = Accuracy, color = Data)) +
   geom_smooth(se = F) +
   theme_bw() + 
-  theme(legend.position = "bottom",
-        legend.background = element_rect(color = 'black')) +
+  theme(legend.position = c(.88, .15),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 7)) +
   labs(title = 'Learning curve for Pima Indians Neural Network')
 
 #starting processing time
@@ -145,8 +147,9 @@ pima_lrn_curve_boost <- learing_curve_dat(dat = pima_data, proportion = (1:10)/1
 ggplot(pima_lrn_curve_boost, aes(x = Training_Size, y = Accuracy, color = Data)) +
   geom_smooth(se = F) +
   theme_bw() + 
-  theme(legend.position = "bottom",
-        legend.background = element_rect(color = 'black')) +
+  theme(legend.position = c(.88, .15),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 7)) +
   labs(title = 'Learning curve for Pima Indians xbgBoost')
 
 #starting processing time
@@ -168,7 +171,7 @@ pima_boost_time <- stop - start
 plot(pima_boost_model)
 
 #making predictions
-pima_boost_pred <- predict(pima_boost_model, newdata = pima_test, type = 'rwa')
+pima_boost_pred <- predict(pima_boost_model, newdata = pima_test, type = 'raw')
 
 #creating a confusion matrix
 pima_boost_cm <- confusionMatrix(pima_boost_pred, pima_test$Diagnosis, mode = 'prec_recall')
@@ -184,8 +187,9 @@ pima_lrn_curve_svm <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10,
 ggplot(pima_lrn_curve_svm, aes(x = Training_Size, y = Accuracy, color = Data)) +
   geom_smooth(se = F) +
   theme_bw() + 
-  theme(legend.position = "bottom",
-        legend.background = element_rect(color = 'black')) +
+  theme(legend.position = c(.88, .15),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 7)) +
   labs(title = 'Learning curve for Pima Indians SVM')
 
 #starting processing time
@@ -243,8 +247,9 @@ pima_lrn_curve_knn <- learing_curve_dat(dat = pima_data, proportion = (1:10)/10,
 ggplot(pima_lrn_curve_knn, aes(x = Training_Size, y = Accuracy, color = Data)) +
   geom_smooth(se = F) +
   theme_bw() + 
-  theme(legend.position = "bottom",
-        legend.background = element_rect(color = 'black')) +
+  theme(legend.position = c(.88, .15),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 7)) +
   labs(title = 'Learning curve for Pima Indians KNN')
 
 #starting processing time

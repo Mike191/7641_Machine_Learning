@@ -181,17 +181,14 @@ inc_nnet_time <- stop - start
 #processing time = 776 seconds
 
 #plotting model complexity curve
-
-
-#final model if needed
-
-
+plot(income_nnet)
 
 #making predictions on test data
 inc_nnet_pred <- predict(income_nnet, newdata = income_test[1:12], type = 'raw', na.action = na.pass)
 
 #creating a confusion matrix
 inc_nnet_cm <- confusionMatrix(inc_nnet_pred, income_test$income, mode = 'prec_recall')
+inc_nnet_cm$table
 
 #------------------------------ Boosting  -------------------------------------
 
@@ -323,8 +320,8 @@ inc_knn_time <- stop - start
 
 
 #plotting values of K (model complexity curve)
-plot(inc_knn_model)
-title("KNN Cross Validation")
+plot(inc_knn_model, main = "KNN Cross Validation" )
+
 
 #making predictions on the test data
 inc_knn_pred <- predict(inc_knn_model, newdata = income_test_half)

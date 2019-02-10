@@ -104,8 +104,9 @@ inc_lrn_curve_tree <- learing_curve_dat(dat = income_train, proportion = (1:10)/
 ggplot(inc_lrn_curve_tree, aes(x = Training_Size, y = Accuracy, color = Data)) +
   geom_smooth(se = F) +
   theme_bw() + 
-  theme(legend.position = c(0.88, 0.85),
-        legend.background = element_rect(color = 'black')) +
+  theme(legend.position = c(.88, .2),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 6)) +
   labs(title = 'Learning curve for Census Income Tree')
 
 #starting processing time
@@ -161,9 +162,10 @@ inc_lrn_curve_nnet <- learing_curve_dat(dat = income_train_half, proportion = (1
 ggplot(inc_lrn_curve_nnet, aes(x = Training_Size, y = Accuracy, color = Data)) +
   geom_smooth(se = F) +
   theme_bw() + 
-  theme(legend.position = "bottom",
-        legend.background = element_rect(color = 'black')) +
-  labs(title = 'Learning curve for Census Income Neural Network')
+  theme(legend.position = c(.88, .2),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 7)) +
+  labs(title = 'Learning curve for Income Neural Network')
 
 #starting processing time
 start <- proc.time()[3]
@@ -234,9 +236,10 @@ inc_lrn_curve_svm <- learing_curve_dat(dat = income_train_half, proportion = (1:
 ggplot(inc_lrn_curve_svm, aes(x = Training_Size, y = Accuracy, color = Data)) +
   geom_smooth(se = F) +
   theme_bw() + 
-  theme(legend.position = "bottom",
-        legend.background = element_rect(color = 'black')) +
-  labs(title = 'Learning curve for Census Income SVM')
+  theme(legend.position = c(.88, .15),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 7)) +
+  labs(title = 'Learning curve for Income SVM')
 
 
 #starting processing time
@@ -299,9 +302,10 @@ inc_lrn_curve_knn <- learing_curve_dat(dat = income_train_half, proportion = (1:
 ggplot(inc_lrn_curve_knn, aes(x = Training_Size, y = Accuracy, color = Data)) +
   geom_smooth(se = F) +
   theme_bw() + 
-  theme(legend.position = "bottom",
-        legend.background = element_rect(color = 'black')) +
-  labs(title = 'Learning curve for Census Income KNN')
+  theme(legend.position = c(.88, .15),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 7)) +
+  labs(title = 'Learning curve for Income KNN')
 
 #starting processing time
 start <- proc.time()[3]

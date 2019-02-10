@@ -124,15 +124,14 @@ pima_nn_time <- stop - start
 #23 seconds
 
 #plotting model complexity curve
-
-
+plot(pima_nn_model)
 
 #making predictions on test data
 pima_nn_pred <- predict(pima_nn_model, newdata = pima_test, type = 'raw')
 
 #creating a confusion matrix
 pima_nn_cm <- confusionMatrix(pima_nn_pred, pima_test$Diagnosis, mode = 'prec_recall')
-
+pima_nn_cm$table
 
 
 
@@ -166,13 +165,14 @@ pima_boost_time <- stop - start
 #685 seconds
 
 #model complexity curve
+plot(pima_boost_model)
 
 #making predictions
 pima_boost_pred <- predict(pima_boost_model, newdata = pima_test, type = 'rwa')
 
 #creating a confusion matrix
 pima_boost_cm <- confusionMatrix(pima_boost_pred, pima_test$Diagnosis, mode = 'prec_recall')
-
+pima_boost_cm$table
 
 #------------------------------ SVM  ------------------------------------------
 
@@ -205,13 +205,13 @@ pima_svm_time <- stop - start
 
 
 #expanding the grid to try more options for C
-grid <- expand.grid(C = c(0.25, 0.5, 0.75, 1, 1.25, 1.5))
+grid <- expand.grid(C = c(0.01, 0.05, 0.1,0.25, 0.5, 0.75, 1, 1.25, 1.5))
 
 #starting processing time
 start <- proc.time()[3]
 
-#building svm model
-pima_svm_model_grid <- train(Diagnosis ~ ., data = pima_train, method = 'svmLinear', tuneLength = 9, metric = 'Accuracy', tuneGrid = grid, trControl = ctrl)
+#building svm model - including centering and scaling
+pima_svm_model_grid <- train(Diagnosis ~ ., data = pima_train, method = 'svmLinear', tuneLength = 9, metric = 'Accuracy', tuneGrid = grid, trControl = ctrl, preProcess = c('center', 'scale'))
 #save(pima_svm_model_grid, file = 'pima_svm_model_grid.rda')
 
 #ending processing time
@@ -219,17 +219,17 @@ stop <- proc.time()[3]
 
 #storing the time
 pima_grid_time <- stop - start
-#5 seconds
+#7 seconds
 
 #plotting tuning grid results (model complexity curve)
-
-#final model
+plot(pima_svm_model_grid, main = 'Cross Validation Results') 
 
 #making predcitions on test data
-pima_svm_pred <- predict(pima_svm_model, newdata = pima_test)
+pima_svm_pred <- predict(pima_svm_model_grid, newdata = pima_test)
 
 #creating confusion matrix
 pima_svm_cm <- confusionMatrix(pima_svm_pred, pima_test$Diagnosis, mode = 'prec_recall')
+pima_svm_cm$table
 
 
 
@@ -262,7 +262,8 @@ stop <- proc.time()[3]
 pima_knn_time <- stop - start
 #2 seconds
 
-#model complexity curve
+#plotting values of K (model complexity curve)
+plot(pima_knn_model, main = "KNN Cross Validation" )
 
 #making predictions on test data
 pima_knn_pred <- predict(pima_knn_model, newdata = pima_test)
